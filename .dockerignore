@@ -1,0 +1,42 @@
+# Virtual environments
+.venv/
+venv/
+env/
+__pycache__/
+*.py[oc]
+*.pyc
+.pytest_cache/
+
+# Local data & cache (critical - can be 20+ GB)
+.data/
+data/
+.cache/
+root/.cache/
+**/huggingface/
+**/docling/
+.models/
+
+# Git history
+.git/
+.gitignore
+.gitattributes
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# IDE and OS files
+.DS_Store
+.env.local
+.vscode/
+.idea/
+*.swp
+*.swo
+*.log
+*.pid
+
+# Frontend (not needed for backend image)
+ui/
+node_modules/

@@ -1,0 +1,5 @@
+INFO:     Will watch for changes in these directories: ['/Users/anishbisht/project/Code Basic/fin-chatbot']
+ERROR:    [Errno 48] Address already in use
+🚀 Starting FinBot backend...
+   API Key present: ✅
+   Reload enabled: True
