@@ -1,0 +1,21 @@
+# Dependencies (reinstalled during build)
+node_modules/
+
+# Next.js build output (rebuilt during docker build)
+.next/
+out/
+
+# Git
+.git/
+.gitignore
+
+# Env files (use docker-compose env vars instead)
+.env.local
+.env*.local
+
+# OS files
+.DS_Store
+*.log
+
+# TypeScript build info
+*.tsbuildinfo
