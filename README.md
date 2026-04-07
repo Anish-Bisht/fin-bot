@@ -57,7 +57,6 @@ graph TD
 4. Set up environment variables in `.env`:
    ```env
    GROQ_API_KEY=your_groq_key
-   SERPAPI_API_KEY=your_serpapi_key
    ```
 5. Ingest Data:
    ```bash
@@ -96,7 +95,7 @@ Below is the ablation study results on a sample dataset evaluating the system wi
 
 Use the following credentials to test RBAC logic:
 - Employee: `employee1` / `password`
-- Finance: `finance1` / `password` 
+- Finance: `c` / `password` 
 - Engineering: `eng1` / `password`
 - Marketing: `mktg1` / `password`
 - Executive: `admin` / `admin`

@@ -46,6 +46,7 @@ def get_all_users():
     c = conn.cursor()
     c.execute("SELECT username, role, department FROM users")
     rows = c.fetchall()
+    print(f"this is the rows {rows}")
     conn.close()
     return [{"username": r[0], "role": r[1], "department": r[2]} for r in rows]
 
@@ -89,25 +90,47 @@ def init_qdrant():
     if qdrant_client is not None:
         return
 
+    import time
     qdrant_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".data", "qdrant")
     os.makedirs(qdrant_path, exist_ok=True)
     qdrant_url = os.environ.get("QDRANT_URL")
-    if qdrant_url:
-        qdrant_client = QdrantClient(url=qdrant_url)
-    else:
-        qdrant_client = QdrantClient(path=qdrant_path)
 
+    max_retries = 30
+    retry_delay = 1
+
+    for attempt in range(max_retries):
+        try:
+            if qdrant_url:
+                qdrant_client = QdrantClient(url=qdrant_url, timeout=10)
+            else:
+                qdrant_client = QdrantClient(path=qdrant_path)
+
+            # Test connection
+            qdrant_client.get_collection(COLLECTION_NAME)
+            return
+        except Exception as e:
+            if attempt < max_retries - 1:
+                print(f"⚠️  Qdrant connection attempt {attempt + 1}/{max_retries} failed: {e}")
+                print(f"   Retrying in {retry_delay}s...")
+                time.sleep(retry_delay)
+                qdrant_client = None
+            else:
+                print(f"❌ Failed to connect to Qdrant after {max_retries} attempts")
+                raise
+
+    # Create collection if it doesn't exist
     try:
-        qdrant_client.get_collection(COLLECTION_NAME)
+        if qdrant_client:
+            qdrant_client.create_collection(
+                collection_name=COLLECTION_NAME,
+                vectors_config=models.VectorParams(size=384, distance=models.Distance.COSINE),
+            )
     except Exception:
-        qdrant_client.create_collection(
-            collection_name=COLLECTION_NAME,
-            vectors_config=models.VectorParams(size=384, distance=models.Distance.COSINE),
-        )
+        pass  # Collection likely already exists
 
 def add_document(doc_id: str, content: str, role: str, folder: str = "", filename: str = ""):
     """Add a document to Qdrant with proper RBAC roles (all lowercase)."""
-    from langchain_community.embeddings import HuggingFaceEmbeddings
+    from langchain_huggingface import HuggingFaceEmbeddings
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     vector = embeddings.embed_query(content)
     
@@ -163,7 +186,7 @@ def get_all_documents():
     return docs
 
 def search_documents(query: str, user_role: str, top_k: int = 5):
-    from langchain_community.embeddings import HuggingFaceEmbeddings
+    from langchain_huggingface import HuggingFaceEmbeddings
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     vector = embeddings.embed_query(query)
 

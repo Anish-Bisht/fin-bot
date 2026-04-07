@@ -27,6 +27,8 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
 
 @router.post("/brief", response_model=BriefResponse)
 def generate_brief(payload: BriefRequest, current_user: dict = Depends(get_current_user)):
-    user_role = current_user.get("role", "Employee")
-    result = run_agent(payload.query, payload.thread_id, user_role)
+    # Normalize role to lowercase to match Qdrant RBAC filters and router layer
+    user_role = current_user.get("role", "employee").lower()
+    username = current_user.get("username", "unknown")
+    result = run_agent(payload.query, payload.thread_id, user_role, username)
     return BriefResponse(**result)
