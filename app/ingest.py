@@ -4,7 +4,7 @@ import io
 from uuid import uuid4
 from docling.document_converter import DocumentConverter
 from docling.chunking import HybridChunker
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchAny
 

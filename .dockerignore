@@ -1,13 +1,17 @@
-# Virtual environments
-.venv/
-venv/
-env/
+# ── Python artefacts ─────────────────────────────────────────────────────────
 __pycache__/
 *.py[oc]
 *.pyc
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
-# Local data & cache (critical - can be 20+ GB)
+# ── Virtual environments ─────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+
+# ── Local data & model caches (can be 20+ GB — never send to Docker daemon) ──
 .data/
 data/
 .cache/
@@ -16,27 +20,36 @@ root/.cache/
 **/docling/
 .models/
 
-# Git history
+# ── Git ──────────────────────────────────────────────────────────────────────
 .git/
 .gitignore
 .gitattributes
 
-# Build artifacts
+# ── Build artefacts ──────────────────────────────────────────────────────────
 dist/
 build/
 *.egg-info/
 .eggs/
 
-# IDE and OS files
+# ── IDE / OS ─────────────────────────────────────────────────────────────────
 .DS_Store
-.env.local
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# ── Logs & secrets ───────────────────────────────────────────────────────────
 *.log
 *.pid
+.env.local
+.env.*.local
 
-# Frontend (not needed for backend image)
+# ── Frontend (not needed for backend image) ──────────────────────────────────
 ui/
 node_modules/
+
+# ── Docs / CI (not needed at runtime) ───────────────────────────────────────
+README.md
+COMPLETION_SUMMARY.md
+QUICKSTART.sh
+*.md

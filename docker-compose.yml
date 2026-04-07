@@ -1,12 +1,30 @@
 services:
+
+  # ── Qdrant Vector DB ────────────────────────────────────────────────────────
   qdrant:
-    image: qdrant/qdrant:latest
+    image: qdrant/qdrant:v1.13.4
     ports:
       - "6333:6333"
     volumes:
       - qdrant_data:/qdrant/storage
-    restart: always
+    environment:
+      # Ensure Qdrant starts properly without hanging
+      QDRANT__LOG_LEVEL: INFO
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 2 bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+        reservations:
+          memory: 512m
 
+  # ── Python / FastAPI Backend ────────────────────────────────────────────────
   backend:
     build:
       context: .
@@ -14,40 +32,88 @@ services:
     ports:
       - "8000:8000"
     volumes:
+      # Persist SQLite + local Qdrant storage
       - ./.data:/app/.data
-      - ./data:/app/data
-      - ./documents:/app/documents
-      - hf_cache:/root/.cache/huggingface
-      - docling_cache:/root/.cache/docling
+      # ── ML model cache (KEY FIX) ──────────────────────────────────────────
+      # Models download ONCE into this named volume on first boot.
+      # Persists across `docker compose up/down` and even image rebuilds.
+      # This is what keeps the image small (~1-2 GB vs 26 GB).
+      - ml_model_cache:/app/.cache
+      # Documents are read-only inside the container
+      - ./documents:/app/documents:ro
+      - ./data:/app/data:ro
     environment:
-      - QDRANT_URL=http://qdrant:6333
+      QDRANT_URL: http://qdrant:6333
+      HF_HOME: /app/.cache/huggingface
+      DOCLING_CACHE_DIR: /app/.cache/docling
+      TRANSFORMERS_CACHE: /app/.cache/huggingface
+      TOKENIZERS_PARALLELISM: "false"
     env_file:
       - .env
     depends_on:
-      - qdrant
-    restart: on-failure:5
+      qdrant:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 10s
       retries: 5
-      start_period: 30s
+      # First boot downloads ML models (~600 MB) — allow up to 3 min
+      start_period: 180s
+    restart: on-failure:5
+    deploy:
+      resources:
+        limits:
+          memory: 3g
+          cpus: "2.0"
+        reservations:
+          memory: 1g
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
+  # ── Next.js Frontend ────────────────────────────────────────────────────────
   frontend:
     build:
       context: ./ui
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api
+      NODE_ENV: production
     depends_on:
-      - backend
-    restart: always
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3000 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+        reservations:
+          memory: 128m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
+# ── Named Volumes ─────────────────────────────────────────────────────────────
 volumes:
   qdrant_data:
-  hf_cache:
-  docling_cache:
+    driver: local
+  ml_model_cache:
+    driver: local
+    # This volume holds HuggingFace + Docling models (~600 MB)
+    # It survives image rebuilds — models are never re-downloaded unless
+    # you explicitly run: docker volume rm fin-chatbot_ml_model_cache
