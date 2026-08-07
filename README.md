@@ -99,3 +99,6 @@ Use the following credentials to test RBAC logic:
 - Engineering: `eng1` / `password`
 - Marketing: `mktg1` / `password`
 - Executive: `admin` / `admin`
+
+
+Demo video link: https://drive.google.com/file/d/16mxR-Rvhq6J8qucBsn2Om2n4oLNAUmjS/view?usp=sharing
