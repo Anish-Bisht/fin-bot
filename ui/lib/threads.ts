@@ -18,7 +18,28 @@ export interface Thread {
   updatedAt: number;
 }
 
-const STORAGE_KEY = "finbot-threads";
+const STORAGE_KEY_PREFIX = "finbot-threads";
+const CURRENT_USER_KEY = "finbot-current-user";
+
+function getStorageKey(): string {
+  if (typeof window === "undefined") return STORAGE_KEY_PREFIX;
+  const username = localStorage.getItem(CURRENT_USER_KEY) || "anonymous";
+  return `${STORAGE_KEY_PREFIX}-${username}`;
+}
+
+/** Call this after login to scope thread storage to the current user. */
+export function setCurrentUser(username: string) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(CURRENT_USER_KEY, username);
+  }
+}
+
+/** Call this on logout to clear the current user scope. */
+export function clearCurrentUser() {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(CURRENT_USER_KEY);
+  }
+}
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -26,7 +47,7 @@ function generateId(): string {
 
 export function getThreads(): Thread[] {
   if (typeof window === "undefined") return [];
-  const raw = localStorage.getItem(STORAGE_KEY);
+  const raw = localStorage.getItem(getStorageKey());
   if (!raw) return [];
   try {
     return JSON.parse(raw) as Thread[];
@@ -36,7 +57,7 @@ export function getThreads(): Thread[] {
 }
 
 function saveThreads(threads: Thread[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(threads));
+  localStorage.setItem(getStorageKey(), JSON.stringify(threads));
 }
 
 export function createThread(): Thread {

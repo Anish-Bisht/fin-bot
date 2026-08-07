@@ -155,6 +155,8 @@ def run_agent(query: str, thread_id: str, user_role: str = "employee", username:
         else:
             raise
 
+    # Extract the final response and metadata from the agent result
+    try:
         messages = result.get("messages", [])
         if not messages:
             raise ValueError("No messages returned from agent")

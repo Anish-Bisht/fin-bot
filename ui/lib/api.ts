@@ -1,3 +1,5 @@
+import { clearCurrentUser } from "@/lib/threads";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
 export function getToken() {
@@ -16,6 +18,7 @@ export function setToken(token: string) {
 export function logout() {
   if (typeof window !== "undefined") {
     localStorage.removeItem("token");
+    clearCurrentUser();
     window.location.href = "/login";
   }
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/lib/api";
+import { setCurrentUser } from "@/lib/threads";
 import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
@@ -15,6 +16,7 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       await login(username, password);
+      setCurrentUser(username);
       router.push("/");
     } catch (err: any) {
       setError("Invalid username or password");

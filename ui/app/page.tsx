@@ -127,7 +127,7 @@ export default function Home() {
 
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col min-h-0">
-          <ChatWindow messages={messages} isLoading={isLoading} />
+          <ChatWindow messages={messages} isLoading={isLoading} userRole={user?.role} onSuggestionClick={handleSendMessage} />
           <ChatInput onSend={handleSendMessage} disabled={isLoading} />
         </div>
       </div>
